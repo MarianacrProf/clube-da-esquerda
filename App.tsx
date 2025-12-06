@@ -34,17 +34,87 @@ import { Avatar } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
-function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [userCommunities, setUserCommunities] = useState([]);
+/* =========================
+   Tipos e Interfaces
+   ========================= */
 
-  const handleCreateCommunity = (community) => {
-    setUserCommunities(prev => [...prev, { ...community, id: Date.now(), members: 1, isOwner: true }]);
+export interface CommunityData {
+  name: string;
+  members: number;
+  symbol: string;
+  iconColor: string;
+  baseColor: string;
+  metalColor: string;
+  description: string;
+  stencilFont?: boolean;
+  cover?: string;
+}
+
+export interface UserCommunity extends CommunityData {
+  id: number;
+  isOwner?: boolean;
+}
+
+export interface Theme {
+  title: string;
+  symbol?: string;
+  color?: string;
+}
+
+export interface Moderator {
+  name: string;
+}
+
+export interface Forum {
+  title: string;
+  moderator: Moderator;
+  description?: string;
+  id?: string | number;
+}
+
+export interface PlanData {
+  plan: string;
+  isBetaTester?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ProfileData {
+  name: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+/* =========================
+   Components
+   ========================= */
+
+interface CommunitiesViewProps {
+  onSelectTheme: (theme: Theme) => void;
+  onSelectCommunity: (community: UserCommunity) => void;
+}
+
+function CommunitiesView({ onSelectTheme, onSelectCommunity }: CommunitiesViewProps) {
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [userCommunities, setUserCommunities] = useState<UserCommunity[]>([]);
+
+  const handleCreateCommunity = (community: { name: string; description: string; cover: string }) => {
+    const newCommunity: UserCommunity = {
+      ...community,
+      id: Date.now(),
+      members: 1,
+      isOwner: true,
+      symbol: "🏳️",
+      iconColor: "text-gray-800",
+      baseColor: "#ffffff",
+      metalColor: "#cccccc",
+    };
+
+    setUserCommunities((prev) => [...prev, newCommunity]);
   };
 
   return (
     <div className="w-full p-6">
-      <motion.div 
+      <motion.div
         className="flex items-center justify-between mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,8 +126,8 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
             <span className="block mt-2 text-sm font-bold text-red-600">Clube da Esquerda: Resistência e Cultura Brasileira</span>
           </p>
         </div>
-        
-        <Button 
+
+        <Button
           onClick={() => setShowCreateModal(true)}
           className="bg-green-600 hover:bg-green-700 ml-8"
         >
@@ -65,19 +135,18 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
           Criar Comunidade
         </Button>
       </motion.div>
-      
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {communitiesData.map((community, index) => (
+        {communitiesData.map((community: CommunityData, index: number) => (
           <CommunityButton3D
             key={community.name}
             community={community}
             index={index}
             onClick={() => {
-              // Todos os patches levam para comunidades temáticas
               onSelectTheme({
                 title: community.name,
                 symbol: community.symbol,
-                color: community.baseColor
+                color: community.baseColor,
               });
             }}
           />
@@ -86,14 +155,14 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
 
       {/* Comunidades criadas pelo usuário */}
       {userCommunities.length > 0 && (
-        <motion.div 
+        <motion.div
           className="mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <h2 className="text-green-700 mb-6 text-center">Suas Comunidades</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {userCommunities.map((community, index) => (
+            {userCommunities.map((community: UserCommunity, index: number) => (
               <motion.div
                 key={community.id}
                 className="relative bg-white rounded-lg overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
@@ -124,7 +193,7 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
       )}
 
       {/* Seção de comunidades em destaque */}
-      <motion.div 
+      <motion.div
         className="mt-16 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -158,7 +227,7 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
 }
 
 function ChatView() {
-  const conversations = [
+  const conversations: { name: string; message: string; time: string; avatar: string; online: boolean }[] = [
     { name: "Ana Silva", message: "Vamos organizar aquela roda de samba?", time: "14:30", avatar: "https://images.unsplash.com/photo-1494790108755-2616b9c1cd17?w=100", online: true },
     { name: "João Santos", message: "Adorei seu post sobre educação!", time: "13:45", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100", online: false },
     { name: "Maria Costa", message: "Obrigada pelo apoio ao projeto!", time: "12:20", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100", online: true },
@@ -170,7 +239,7 @@ function ChatView() {
       <div className="space-y-4">
         {conversations.map((conv, index) => (
           <motion.div
-            key={conv.name}
+            key={`${conv.name}-${index}`}
             className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -200,27 +269,29 @@ function ChatView() {
   );
 }
 
-export default function App() {
-  const [activeView, setActiveView] = useState("Roda Principal");
-  const [notifications] = useState(3);
-  const [showDebateRoom, setShowDebateRoom] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [selectedForum, setSelectedForum] = useState(null);
-  const [showProfileCreation, setShowProfileCreation] = useState(false);
-  const [selectedCommunity, setSelectedCommunity] = useState(null);
+/* =========================
+   App (principal)
+   ========================= */
 
-  const [selectedTheme, setSelectedTheme] = useState(null);
-  const [showFriendsPage, setShowFriendsPage] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
-  const [showPlanSelection, setShowPlanSelection] = useState(false);
-  const [showMusicCommunity, setShowMusicCommunity] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  
-  // Sistema de Beta Tester
-  const [isBetaTester] = useState(true); // Todos os primeiros usuários são beta testers
-  const [showInviteSystem, setShowInviteSystem] = useState(false);
-  
-  // Estado com persistência no localStorage
+export default function App() {
+  const [activeView, setActiveView] = useState<string>("Roda Principal");
+  const [notifications] = useState<number>(3);
+  const [showDebateRoom, setShowDebateRoom] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [selectedForum, setSelectedForum] = useState<Forum | null>(null);
+  const [showProfileCreation, setShowProfileCreation] = useState<boolean>(false);
+  const [selectedCommunity, setSelectedCommunity] = useState<UserCommunity | null>(null);
+
+  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
+  const [showFriendsPage, setShowFriendsPage] = useState<boolean>(false);
+  const [showSignup, setShowSignup] = useState<boolean>(false);
+  const [showPlanSelection, setShowPlanSelection] = useState<boolean>(false);
+  const [showMusicCommunity, setShowMusicCommunity] = useState<boolean>(false);
+  const [showAnalytics, setShowAnalytics] = useState<boolean>(false);
+
+  const [isBetaTester] = useState<boolean>(true);
+  const [showInviteSystem, setShowInviteSystem] = useState<boolean>(false);
+
   const [userPlanType, setUserPlanType] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('userPlanType');
@@ -239,14 +310,14 @@ export default function App() {
       case "Comunidades":
         if (showMusicCommunity) {
           return (
-            <MusicBrazileiraCommunity 
-              onBack={() => setShowMusicCommunity(false)} 
+            <MusicBrazileiraCommunity
+              onBack={() => setShowMusicCommunity(false)}
             />
           );
         }
         if (selectedTheme) {
           return (
-            <ThematicCommunities 
+            <ThematicCommunities
               themeTitle={selectedTheme.title}
               themeSymbol={selectedTheme.symbol}
               themeColor={selectedTheme.color}
@@ -255,20 +326,23 @@ export default function App() {
             />
           );
         }
-        return selectedCommunity ? 
+        return selectedCommunity ?
           <CommunityPage onBack={() => setSelectedCommunity(null)} /> :
-          <CommunitiesView 
+          <CommunitiesView
             onSelectTheme={setSelectedTheme}
-            onSelectCommunity={setSelectedCommunity}
+            onSelectCommunity={(c) => {
+              setSelectedCommunity(c);
+              setActiveView("Comunidades");
+            }}
           />;
       case "Conversas":
         return <ChatView />;
       case "Chamados":
         return <EventsPage userCity="São Paulo" userType="regular" />;
       case "Fóruns":
-        return selectedForum ? 
-          <ForumDebate 
-            forumTitle={selectedForum.title} 
+        return selectedForum ?
+          <ForumDebate
+            forumTitle={selectedForum.title}
             moderator={selectedForum.moderator.name}
             onBackToForums={() => setSelectedForum(null)}
           /> :
@@ -279,10 +353,10 @@ export default function App() {
         if (showAnalytics && userPlanType === "institution") {
           return <InstitutionAnalytics onBack={() => setShowAnalytics(false)} />;
         }
-        return showFriendsPage ? 
+        return showFriendsPage ?
           <FriendsPage onBack={() => setShowFriendsPage(false)} /> :
-          <UserProfile 
-            onShowFriends={() => setShowFriendsPage(true)} 
+          <UserProfile
+            onShowFriends={() => setShowFriendsPage(true)}
             isInstitution={userPlanType === "institution"}
             onShowAnalytics={() => setShowAnalytics(true)}
           />;
@@ -299,28 +373,23 @@ export default function App() {
 
   // Fluxo de autenticação
   if (!isLoggedIn) {
-    // Se está mostrando signup
     if (showSignup && !showPlanSelection && !showProfileCreation) {
       return (
-        <SignupPage 
+        <SignupPage
           onSignup={() => setShowPlanSelection(true)}
           onBackToLogin={() => setShowSignup(false)}
         />
       );
     }
-    
-    // Se está na seleção de plano
+
     if (showPlanSelection && !showProfileCreation) {
       return (
         <PlanSelection
-          onComplete={(planData) => {
-            console.log("Plano selecionado:", planData);
+          onComplete={(planData: PlanData) => {
             setUserPlanType(planData.plan);
-            // Salvar no localStorage
             if (typeof window !== 'undefined') {
               localStorage.setItem('userPlanType', planData.plan);
               localStorage.setItem('planData', JSON.stringify(planData));
-              // Se for beta tester, salvar também
               if (planData.isBetaTester) {
                 localStorage.setItem('isBetaTester', 'true');
               }
@@ -335,13 +404,11 @@ export default function App() {
         />
       );
     }
-    
-    // Se está criando perfil
+
     if (showProfileCreation) {
       return (
-        <ProfileCreation 
-          onComplete={(profileData) => {
-            console.log("Perfil criado:", profileData);
+        <ProfileCreation
+          onComplete={(profileData: ProfileData) => {
             setShowProfileCreation(false);
             setIsLoggedIn(true);
           }}
@@ -352,10 +419,9 @@ export default function App() {
         />
       );
     }
-    
-    // Tela de login padrão
+
     return (
-      <LoginPage 
+      <LoginPage
         onLogin={() => setIsLoggedIn(true)}
         onSignup={() => setShowSignup(true)}
       />
@@ -364,19 +430,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 relative">
-      {/* Fundo decorativo brasileiro */}
       <BrazilianBackground />
-      {/* Header */}
-      <motion.header 
+      <motion.header
         className="bg-white shadow-lg border-b-4 border-gradient-to-r from-green-500 via-yellow-400 to-red-500"
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo e título */}
             <div className="flex items-center gap-4">
-              <motion.div 
+              <motion.div
                 className="w-12 h-12 bg-gradient-to-br from-green-500 via-yellow-400 to-red-500 rounded-full flex items-center justify-center"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -394,18 +457,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Barra de busca */}
             <div className="flex-1 max-w-md mx-8">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input 
-                  placeholder="Buscar na roda..." 
+                <Input
+                  placeholder="Buscar na roda..."
                   className="pl-10 bg-gray-50 border-0 focus:bg-white"
                 />
               </div>
             </div>
 
-            {/* Ações do usuário */}
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="w-5 h-5" />
@@ -415,15 +476,15 @@ export default function App() {
                   </Badge>
                 )}
               </Button>
-              
+
               <Button variant="ghost" size="sm">
                 <MessageSquare className="w-5 h-5" />
               </Button>
 
               <div className="flex items-center gap-2">
                 <Avatar className="w-8 h-8">
-                  <ImageWithFallback 
-                    src="https://images.unsplash.com/photo-1494790108755-2616b9c1cd17?w=100" 
+                  <ImageWithFallback
+                    src="https://images.unsplash.com/photo-1494790108755-2616b9c1cd17?w=100"
                     alt="Usuário"
                     className="rounded-full object-cover"
                   />
@@ -444,22 +505,18 @@ export default function App() {
         </div>
       </motion.header>
 
-      {/* Layout principal */}
       <div className="relative z-10">
-        {/* Navegação circular */}
         {!showDebateRoom && (
-          <CircularNavigation 
+          <CircularNavigation
             activeItem={activeView}
             onItemClick={setActiveView}
           />
         )}
 
-        {/* Conteúdo principal */}
         <main className={showDebateRoom ? "p-8" : "pl-80 pr-8 py-8"}>
           <div className="max-w-[1200px] mx-auto">
-            {/* Botão para demo da mesa de debate */}
             {!showDebateRoom && (
-              <motion.div 
+              <motion.div
                 className="fixed top-20 right-8 z-50"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -474,13 +531,12 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* Botão flutuante de convite para Beta Testers */}
             {!showDebateRoom && isBetaTester && activeView === "Roda Principal" && (
-              <motion.div 
+              <motion.div
                 className="fixed bottom-8 right-8 z-50"
                 initial={{ opacity: 0, scale: 0, y: 100 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ 
+                transition={{
                   delay: 1.5,
                   type: "spring",
                   stiffness: 260,
@@ -509,9 +565,8 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* Botão para voltar da mesa de debate */}
             {showDebateRoom && (
-              <motion.div 
+              <motion.div
                 className="mb-6"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -538,8 +593,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* Rodapé com valores */}
-      <motion.footer 
+      <motion.footer
         className="bg-gradient-to-r from-green-600 via-yellow-500 to-red-600 text-white py-8 mt-16"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -567,8 +621,7 @@ export default function App() {
         </div>
       </motion.footer>
 
-      {/* Modal de Sistema de Convites Beta */}
-      <BetaInviteSystem 
+      <BetaInviteSystem
         isOpen={showInviteSystem}
         onClose={() => setShowInviteSystem(false)}
         userName="Maria Silva"
