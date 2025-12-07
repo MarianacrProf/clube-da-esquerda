@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Toaster } from 'sonner@2.0.3'
+import { Toaster } from 'sonner'
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
