@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Toaster, toast } from 'sonner'
+import { supabase } from './supabaseClient'
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -7,9 +8,37 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
 
-  // Login function with validation
-  const handleLogin = (e: React.FormEvent) => {
+  // Check if user is already logged in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsLoggedIn(true)
+        setUserEmail(session.user.email || '')
+        setCurrentPage('feed')
+      }
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsLoggedIn(true)
+        setUserEmail(session.user.email || '')
+        setCurrentPage('feed')
+      } else {
+        setIsLoggedIn(false)
+        setUserEmail('')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Login function with Supabase
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!email || !password) {
@@ -27,16 +56,41 @@ export default function App() {
       return
     }
 
-    // Simulate successful login
-    toast.success('Login realizado com sucesso! 🎉')
-    setTimeout(() => {
-      setIsLoggedIn(true)
-      setCurrentPage('feed')
-    }, 500)
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      })
+
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Email ou senha incorretos!')
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Por favor, confirme seu email antes de fazer login!')
+        } else {
+          toast.error('Erro ao fazer login: ' + error.message)
+        }
+        setLoading(false)
+        return
+      }
+
+      if (data.user) {
+        toast.success('Login realizado com sucesso! 🎉')
+        setIsLoggedIn(true)
+        setUserEmail(data.user.email || '')
+        setCurrentPage('feed')
+      }
+    } catch (error: any) {
+      toast.error('Erro inesperado: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Signup function
-  const handleSignup = (e: React.FormEvent) => {
+  // Signup function with Supabase
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!email || !password) {
@@ -54,12 +108,62 @@ export default function App() {
       return
     }
 
-    // Simulate successful signup
-    toast.success('Cadastro realizado com sucesso! 🎉')
-    setTimeout(() => {
-      setIsLoggedIn(true)
-      setCurrentPage('feed')
-    }, 500)
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      })
+
+      if (error) {
+        toast.error('Erro ao criar conta: ' + error.message)
+        setLoading(false)
+        return
+      }
+
+      if (data.user) {
+        // Check if email confirmation is required
+        if (data.user.identities && data.user.identities.length === 0) {
+          toast.error('Este email já está cadastrado!')
+          setLoading(false)
+          return
+        }
+
+        toast.success(
+          '✅ Cadastro realizado! Verifique seu email para confirmar sua conta.',
+          { duration: 6000 }
+        )
+        
+        // Show message to check email
+        toast.info(
+          '📧 Um email de confirmação foi enviado. Clique no link para ativar sua conta!',
+          { duration: 8000 }
+        )
+
+        // Clear fields
+        setEmail('')
+        setPassword('')
+        setAuthMode('login')
+      }
+    } catch (error: any) {
+      toast.error('Erro inesperado: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Logout function
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      toast.error('Erro ao sair: ' + error.message)
+    } else {
+      toast.success('Você saiu da sua conta!')
+      setIsLoggedIn(false)
+      setUserEmail('')
+      setCurrentPage('login')
+    }
   }
 
   // Render login page
@@ -115,7 +219,8 @@ export default function App() {
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={loading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
                 />
               </div>
 
@@ -131,15 +236,17 @@ export default function App() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={loading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Entrar
+                {loading ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
           )}
@@ -159,7 +266,8 @@ export default function App() {
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  disabled={loading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
                 />
               </div>
 
@@ -175,15 +283,17 @@ export default function App() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  disabled={loading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition-colors"
+                disabled={loading}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cadastrar
+                {loading ? 'Cadastrando...' : 'Cadastrar'}
               </button>
             </form>
           )}
@@ -193,10 +303,9 @@ export default function App() {
             <p className="mt-1">Samba • Capoeira • Democracia</p>
           </div>
 
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              💡 <strong>Versão Demo:</strong> Este é um protótipo. 
-              O login funciona com qualquer email/senha válidos.
+          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              ✅ <strong>Autenticação Real Ativa!</strong> Seus dados são salvos com segurança no Supabase.
             </p>
           </div>
         </div>
@@ -259,6 +368,12 @@ export default function App() {
               >
                 👤 Perfil
               </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 transition-colors"
+              >
+                🚪 Sair
+              </button>
             </nav>
           </div>
         </div>
@@ -273,16 +388,16 @@ export default function App() {
                 🔥 Feed Principal - Roda da Conversa
               </h2>
               <p className="text-gray-600 mb-6">
-                Bem-vindo ao Clube da Esquerda! Este é o protótipo inicial.
+                Bem-vindo ao Clube da Esquerda, <strong>{userEmail}</strong>!
               </p>
               
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
-                <h3 className="font-bold text-yellow-800 mb-2">
-                  ⚠️ Versão Beta
+              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                <h3 className="font-bold text-green-800 mb-2">
+                  ✅ Autenticação Ativa!
                 </h3>
-                <p className="text-yellow-700">
-                  Para ativar todas as funcionalidades (upload de imagens, chat em tempo real, 
-                  posts, UP!, etc), siga o guia <strong>DEPLOY.md</strong> e configure o Supabase.
+                <p className="text-green-700">
+                  Você está logado com uma conta REAL do Supabase! 
+                  Seus dados estão seguros e você receberá emails de confirmação.
                 </p>
               </div>
 
@@ -353,14 +468,14 @@ export default function App() {
 
             <div className="bg-green-700 text-white rounded-lg shadow-lg p-6">
               <h3 className="text-xl font-bold mb-3">
-                🚀 Próximos Passos
+                ✅ Supabase Configurado!
               </h3>
               <ul className="space-y-2">
-                <li>✅ 1. Leia o arquivo <code className="bg-green-800 px-2 py-1 rounded">DEPLOY.md</code></li>
-                <li>✅ 2. Configure o Supabase (backend)</li>
-                <li>✅ 3. Configure variáveis de ambiente</li>
-                <li>✅ 4. Faça deploy na Vercel</li>
-                <li>✅ 5. Todas as funcionalidades estarão ativas!</li>
+                <li>✅ Autenticação real funcionando</li>
+                <li>✅ Envio de emails automático</li>
+                <li>✅ Dados salvos com segurança</li>
+                <li>✅ Você está logado como: {userEmail}</li>
+                <li>🚀 Próximo: Adicionar posts, chat e mais!</li>
               </ul>
             </div>
           </div>
@@ -442,19 +557,19 @@ export default function App() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-start space-x-6 mb-6">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white text-3xl font-bold">
-                U
+                {userEmail.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
                   <h2 className="text-2xl font-bold text-green-700">
-                    Usuário Demo
+                    {userEmail}
                   </h2>
-                  <span className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
-                    ⭐ Beta Tester
+                  <span className="bg-green-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                    ✅ Conta Verificada
                   </span>
                 </div>
                 <p className="text-gray-600">
-                  Membro desde hoje • Engajado na luta por direitos humanos
+                  Membro autenticado • Engajado na luta por direitos humanos
                 </p>
                 <div className="flex items-center space-x-6 mt-4 text-sm">
                   <div>
@@ -478,7 +593,7 @@ export default function App() {
                 🏷️ Patches Políticos
               </h3>
               <div className="flex flex-wrap gap-2">
-                <span className="bg-rainbow-gradient text-white px-3 py-1 rounded-full text-sm">
+                <span className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white px-3 py-1 rounded-full text-sm">
                   🏳️‍🌈 LGBT+
                 </span>
                 <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm">
