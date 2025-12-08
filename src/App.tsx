@@ -1,14 +1,64 @@
 import { useState } from 'react'
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentPage, setCurrentPage] = useState('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
-  // Mock login function
-  const handleLogin = () => {
-    setIsLoggedIn(true)
-    setCurrentPage('feed')
+  // Login function with validation
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos!')
+      return
+    }
+
+    if (!email.includes('@')) {
+      toast.error('Email inválido!')
+      return
+    }
+
+    if (password.length < 6) {
+      toast.error('Senha deve ter pelo menos 6 caracteres!')
+      return
+    }
+
+    // Simulate successful login
+    toast.success('Login realizado com sucesso! 🎉')
+    setTimeout(() => {
+      setIsLoggedIn(true)
+      setCurrentPage('feed')
+    }, 500)
+  }
+
+  // Signup function
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos!')
+      return
+    }
+
+    if (!email.includes('@')) {
+      toast.error('Email inválido!')
+      return
+    }
+
+    if (password.length < 6) {
+      toast.error('Senha deve ter pelo menos 6 caracteres!')
+      return
+    }
+
+    // Simulate successful signup
+    toast.success('Cadastro realizado com sucesso! 🎉')
+    setTimeout(() => {
+      setIsLoggedIn(true)
+      setCurrentPage('feed')
+    }, 500)
   }
 
   // Render login page
@@ -25,50 +75,68 @@ export default function App() {
             </p>
           </div>
 
-          <div className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
+                id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Senha
               </label>
               <input
+                id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
 
             <button
-              onClick={handleLogin}
+              type="submit"
               className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors"
             >
               Entrar
             </button>
 
             <button
-              onClick={handleLogin}
+              type="button"
+              onClick={handleSignup}
               className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition-colors"
             >
               Cadastrar
             </button>
-          </div>
+          </form>
 
           <div className="mt-6 text-center text-sm text-gray-500">
             <p>Inspirado nas tradições brasileiras de roda</p>
             <p className="mt-1">Samba • Capoeira • Democracia</p>
           </div>
+
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Versão Demo:</strong> Este é um protótipo. 
+              O login funciona com qualquer email/senha válidos.
+            </p>
+          </div>
         </div>
-        <Toaster position="top-center" />
+        <Toaster position="top-center" richColors />
       </div>
     )
   }
@@ -369,7 +437,7 @@ export default function App() {
         <span className="text-2xl">✏️</span>
       </button>
 
-      <Toaster position="top-center" />
+      <Toaster position="top-center" richColors />
     </div>
   )
 }
