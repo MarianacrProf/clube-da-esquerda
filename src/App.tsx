@@ -1,622 +1,737 @@
-import { useState, useEffect } from 'react'
-import { Toaster, toast } from 'sonner'
-import { supabase } from './supabaseClient'
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Toaster, toast } from "sonner";
+import { supabase } from "./supabaseClient";
+import { CircularNavigation } from "./components/CircularNavigation";
+import { CircularFeed } from "./components/CircularFeed";
+import { UserProfile } from "./components/UserProfile";
+import { DonationSystem } from "./components/DonationSystem";
+import { PremiumForums } from "./components/PremiumForums";
+import { BrazilianBackground } from "./components/BrazilianBackground";
+import {
+  CommunityButton3D,
+  communitiesData,
+} from "./components/CommunityButton3D";
+import { DebateRoomViewer } from "./components/DebateRoomViewer";
+import { LoginPage } from "./components/LoginPage";
+import { SignupPage } from "./components/SignupPage";
+import { PlanSelection } from "./components/PlanSelection";
+import { EventsPage } from "./components/EventsPage";
+import { ForumDebate } from "./components/ForumDebate";
+import { CulturalRecommendations } from "./components/CulturalRecommendations";
+import { ProfileCreation } from "./components/ProfileCreation";
+import { ForumsList } from "./components/ForumsList";
+import { StoreAndGifts } from "./components/StoreAndGifts";
+import { SolidaryBoxes } from "./components/SolidaryBoxes";
+import { RefreshableFeed } from "./components/RefreshableFeed";
+import { CommunityPage } from "./components/CommunityPage";
+import { CreateCommunityModal } from "./components/CreateCommunityModal";
+import { ThematicCommunities } from "./components/ThematicCommunities";
+import { FriendsPage } from "./components/FriendsPage";
+import { InstitutionAnalytics } from "./components/InstitutionAnalytics";
+import { MusicBrazileiraCommunity } from "./components/MusicBrazileiraCommunity";
+import { BetaInviteSystem } from "./components/BetaInviteSystem";
+import { BetaTesterBadge } from "./components/BetaTesterBadge";
+import {
+  MessageSquare,
+  Users,
+  Bell,
+  Search,
+  UserPlus,
+} from "lucide-react";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Avatar } from "./components/ui/avatar";
+import { Badge } from "./components/ui/badge";
+import { ImageWithFallback } from "./components/figma/ImageWithFallback";
+
+function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [userCommunities, setUserCommunities] = useState([]);
+
+  const handleCreateCommunity = (community) => {
+    setUserCommunities((prev) => [
+      ...prev,
+      {
+        ...community,
+        id: Date.now(),
+        members: 1,
+        isOwner: true,
+      },
+    ]);
+  };
+
+  return (
+    <div className="w-full p-6">
+      <motion.div
+        className="flex items-center justify-between mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="text-center flex-1">
+          <h1 className="text-green-700 mb-2">
+            Comunidades da Roda
+          </h1>
+          <p className="text-gray-600">
+            Cole estes patches na sua jaqueta digital!
+            <span className="block mt-2 text-sm font-bold text-red-600">
+              Clube da Esquerda: Resistência e Cultura
+              Brasileira
+            </span>
+          </p>
+        </div>
+
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-green-600 hover:bg-green-700 ml-8"
+        >
+          <Users className="w-4 h-4 mr-2" />
+          Criar Comunidade
+        </Button>
+      </motion.div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {communitiesData.map((community, index) => (
+          <CommunityButton3D
+            key={community.name}
+            community={community}
+            index={index}
+            onClick={() => {
+              // Todos os patches levam para comunidades temáticas
+              onSelectTheme({
+                title: community.name,
+                symbol: community.symbol,
+                color: community.baseColor,
+              });
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Comunidades criadas pelo usuário */}
+      {userCommunities.length > 0 && (
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="text-green-700 mb-6 text-center">
+            Suas Comunidades
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {userCommunities.map((community, index) => (
+              <motion.div
+                key={community.id}
+                className="relative bg-white rounded-lg overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => onSelectCommunity(community)}
+              >
+                <div className="h-32 overflow-hidden">
+                  <ImageWithFallback
+                    src={community.cover}
+                    alt={community.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-sm mb-1">
+                    {community.name}
+                  </h3>
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                    {community.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">
+                      {community.members} membro
+                      {community.members > 1 ? "s" : ""}
+                    </span>
+                    <Badge className="bg-green-100 text-green-700 text-xs">
+                      Criador
+                    </Badge>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Seção de comunidades em destaque */}
+      <motion.div
+        className="mt-16 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+      >
+        <h2 className="text-green-700 mb-4">
+          Comunidades Mais Ativas
+        </h2>
+        <div className="flex justify-center gap-8 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+            <span>Filosofia Política - 45 online</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+            <span>Educação Pública - 38 online</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
+            <span>Saúde Mental - 29 online</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Modal de Criar Comunidade */}
+      <CreateCommunityModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={handleCreateCommunity}
+      />
+    </div>
+  );
+}
+
+function ChatView() {
+  const conversations = [
+    {
+      name: "Ana Silva",
+      message: "Vamos organizar aquela roda de samba?",
+      time: "14:30",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108755-2616b9c1cd17?w=100",
+      online: true,
+    },
+    {
+      name: "João Santos",
+      message: "Adorei seu post sobre educação!",
+      time: "13:45",
+      avatar:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
+      online: false,
+    },
+    {
+      name: "Maria Costa",
+      message: "Obrigada pelo apoio ao projeto!",
+      time: "12:20",
+      avatar:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
+      online: true,
+    },
+  ];
+
+  return (
+    <div className="w-full p-6">
+      <h1 className="text-center mb-8 text-blue-700">
+        Conversas Privadas
+      </h1>
+      <div className="space-y-4">
+        {conversations.map((conv, index) => (
+          <motion.div
+            key={conv.name}
+            className="flex items-center gap-4 p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <div className="relative">
+              <Avatar className="w-12 h-12">
+                <ImageWithFallback
+                  src={conv.avatar}
+                  alt={conv.name}
+                  className="rounded-full object-cover"
+                />
+              </Avatar>
+              {conv.online && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              )}
+            </div>
+            <div className="flex-1">
+              <h4 className="font-medium">{conv.name}</h4>
+              <p className="text-sm text-gray-500">
+                {conv.message}
+              </p>
+            </div>
+            <span className="text-xs text-gray-400">
+              {conv.time}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ====================================
+// COMPONENTE PRINCIPAL COM SUPABASE
+// ====================================
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [currentPage, setCurrentPage] = useState('login')
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  // Estados de autenticação Supabase
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  
+  // Estados da aplicação
+  const [activeView, setActiveView] = useState("Roda Principal");
+  const [notifications] = useState(3);
+  const [showDebateRoom, setShowDebateRoom] = useState(false);
+  const [selectedForum, setSelectedForum] = useState(null);
+  const [showProfileCreation, setShowProfileCreation] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState(null);
+  const [selectedTheme, setSelectedTheme] = useState(null);
+  const [showFriendsPage, setShowFriendsPage] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
+  const [showMusicCommunity, setShowMusicCommunity] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Check if user is already logged in
+  // Sistema de Beta Tester
+  const [isBetaTester] = useState(true);
+  const [showInviteSystem, setShowInviteSystem] = useState(false);
+
+  // Estado com persistência no localStorage
+  const [userPlanType, setUserPlanType] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("userPlanType");
+    }
+    return null;
+  });
+
+  // ====================================
+  // SUPABASE: Verificar sessão ao carregar
+  // ====================================
   useEffect(() => {
+    // Verificar se já existe sessão ativa
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setIsLoggedIn(true)
-        setUserEmail(session.user.email || '')
-        setCurrentPage('feed')
+        setIsLoggedIn(true);
+        setUserEmail(session.user.email || "");
       }
-    })
+      setLoading(false);
+    });
 
+    // Escutar mudanças de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setIsLoggedIn(true)
-        setUserEmail(session.user.email || '')
-        setCurrentPage('feed')
+        setIsLoggedIn(true);
+        setUserEmail(session.user.email || "");
       } else {
-        setIsLoggedIn(false)
-        setUserEmail('')
+        setIsLoggedIn(false);
+        setUserEmail("");
       }
-    })
+      setLoading(false);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
-  // Login function with Supabase
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!email || !password) {
-      toast.error('Por favor, preencha todos os campos!')
-      return
-    }
-
-    if (!email.includes('@')) {
-      toast.error('Email inválido!')
-      return
-    }
-
-    if (password.length < 6) {
-      toast.error('Senha deve ter pelo menos 6 caracteres!')
-      return
-    }
-
-    setLoading(true)
-
+  // ====================================
+  // SUPABASE: Função de Login Real
+  // ====================================
+  const handleLoginWithSupabase = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      })
+        email,
+        password,
+      });
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Email ou senha incorretos!')
-        } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Por favor, confirme seu email antes de fazer login!')
-        } else {
-          toast.error('Erro ao fazer login: ' + error.message)
-        }
-        setLoading(false)
-        return
-      }
+      if (error) throw error;
 
       if (data.user) {
-        toast.success('Login realizado com sucesso! 🎉')
-        setIsLoggedIn(true)
-        setUserEmail(data.user.email || '')
-        setCurrentPage('feed')
+        toast.success("Login realizado com sucesso!");
+        setIsLoggedIn(true);
+        setUserEmail(data.user.email || "");
       }
     } catch (error: any) {
-      toast.error('Erro inesperado: ' + error.message)
+      toast.error(error.message || "Erro ao fazer login");
+      console.error("Login error:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Signup function with Supabase
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!email || !password) {
-      toast.error('Por favor, preencha todos os campos!')
-      return
-    }
-
-    if (!email.includes('@')) {
-      toast.error('Email inválido!')
-      return
-    }
-
-    if (password.length < 6) {
-      toast.error('Senha deve ter pelo menos 6 caracteres!')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      })
-
-      if (error) {
-        toast.error('Erro ao criar conta: ' + error.message)
-        setLoading(false)
-        return
-      }
-
-      if (data.user) {
-        // Check if email confirmation is required
-        if (data.user.identities && data.user.identities.length === 0) {
-          toast.error('Este email já está cadastrado!')
-          setLoading(false)
-          return
-        }
-
-        toast.success(
-          '✅ Cadastro realizado! Verifique seu email para confirmar sua conta.',
-          { duration: 6000 }
-        )
-        
-        // Show message to check email
-        toast.info(
-          '📧 Um email de confirmação foi enviado. Clique no link para ativar sua conta!',
-          { duration: 8000 }
-        )
-
-        // Clear fields
-        setEmail('')
-        setPassword('')
-        setAuthMode('login')
-      }
-    } catch (error: any) {
-      toast.error('Erro inesperado: ' + error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Logout function
+  // ====================================
+  // SUPABASE: Função de Logout
+  // ====================================
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      toast.error('Erro ao sair: ' + error.message)
-    } else {
-      toast.success('Você saiu da sua conta!')
-      setIsLoggedIn(false)
-      setUserEmail('')
-      setCurrentPage('login')
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      setUserEmail("");
+      toast.success("Logout realizado!");
+    } catch (error: any) {
+      toast.error("Erro ao fazer logout");
+      console.error("Logout error:", error);
     }
-  }
+  };
 
-  // Render login page
-  if (!isLoggedIn) {
+  // ====================================
+  // RENDERIZAR CONTEÚDO PRINCIPAL
+  // ====================================
+  const renderMainContent = () => {
+    if (showDebateRoom) {
+      return <DebateRoomViewer />;
+    }
+
+    switch (activeView) {
+      case "Roda Principal":
+        return <RefreshableFeed />;
+      case "Comunidades":
+        if (showMusicCommunity) {
+          return (
+            <MusicBrazileiraCommunity
+              onBack={() => setShowMusicCommunity(false)}
+            />
+          );
+        }
+        if (selectedTheme) {
+          return (
+            <ThematicCommunities
+              themeTitle={selectedTheme.title}
+              themeSymbol={selectedTheme.symbol}
+              themeColor={selectedTheme.color}
+              onBack={() => setSelectedTheme(null)}
+              onOpenMusicCommunity={() =>
+                setShowMusicCommunity(true)
+              }
+            />
+          );
+        }
+        return selectedCommunity ? (
+          <CommunityPage
+            onBack={() => setSelectedCommunity(null)}
+          />
+        ) : (
+          <CommunitiesView
+            onSelectTheme={setSelectedTheme}
+            onSelectCommunity={setSelectedCommunity}
+          />
+        );
+      case "Conversas":
+        return <ChatView />;
+      case "Chamados":
+        return (
+          <EventsPage userCity="São Paulo" userType="regular" />
+        );
+      case "Fóruns":
+        return selectedForum ? (
+          <ForumDebate
+            forumTitle={selectedForum.title}
+            moderator={selectedForum.moderator.name}
+            onBack={() => setSelectedForum(null)}
+          />
+        ) : (
+          <ForumsList onSelectForum={setSelectedForum} />
+        );
+      case "Perfil":
+        return <UserProfile />;
+      case "Doações":
+        return <DonationSystem />;
+      case "Premium":
+        return <PremiumForums />;
+      case "Loja":
+        return <StoreAndGifts />;
+      case "Caixinhas":
+        return <SolidaryBoxes />;
+      case "Indicações":
+        return <CulturalRecommendations />;
+      default:
+        return <RefreshableFeed />;
+    }
+  };
+
+  // Loading inicial
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-green-700 mb-2">
-              🌀 Clube da Esquerda
-            </h1>
-            <p className="text-gray-600">
-              Rede Social Circular - Democracia e Respeito
-            </p>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setAuthMode('login')}
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-                authMode === 'login'
-                  ? 'bg-white text-green-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Entrar
-            </button>
-            <button
-              onClick={() => setAuthMode('signup')}
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-                authMode === 'signup'
-                  ? 'bg-white text-yellow-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Cadastrar
-            </button>
-          </div>
-
-          {/* Login Form */}
-          {authMode === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Senha
-                </label>
-                <input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Entrando...' : 'Entrar'}
-              </button>
-            </form>
-          )}
-
-          {/* Signup Form */}
-          {authMode === 'signup' && (
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div>
-                <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  id="signup-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Senha
-                </label>
-                <input
-                  id="signup-password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Cadastrando...' : 'Cadastrar'}
-              </button>
-            </form>
-          )}
-
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Inspirado nas tradições brasileiras de roda</p>
-            <p className="mt-1">Samba • Capoeira • Democracia</p>
-          </div>
-
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
-              ✅ <strong>Autenticação Real Ativa!</strong> Seus dados são salvos com segurança no Supabase.
-            </p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-500 via-yellow-400 to-red-500 rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+          <p className="text-gray-600">Carregando...</p>
         </div>
-        <Toaster position="top-center" richColors />
       </div>
-    )
+    );
   }
 
-  // Render main app
+  // ====================================
+  // TELAS DE AUTENTICAÇÃO
+  // ====================================
+  if (!isLoggedIn) {
+    // Se está no cadastro
+    if (showSignup && !showPlanSelection && !showProfileCreation) {
+      return (
+        <>
+          <SignupPage
+            onBack={() => setShowSignup(false)}
+            onContinue={() => {
+              setShowSignup(false);
+              setShowPlanSelection(true);
+            }}
+          />
+          <Toaster position="top-center" richColors />
+        </>
+      );
+    }
+
+    // Se está na seleção de plano
+    if (showPlanSelection && !showProfileCreation) {
+      return (
+        <PlanSelection
+          onComplete={(planData) => {
+            console.log("Plano selecionado:", planData);
+            setUserPlanType(planData.plan);
+            // Salvar no localStorage
+            if (typeof window !== "undefined") {
+              localStorage.setItem(
+                "userPlanType",
+                planData.plan,
+              );
+              localStorage.setItem(
+                "planData",
+                JSON.stringify(planData),
+              );
+              // Se for beta tester, salvar também
+              if (planData.isBetaTester) {
+                localStorage.setItem("isBetaTester", "true");
+              }
+            }
+            setShowPlanSelection(false);
+            setShowProfileCreation(true);
+          }}
+          onBack={() => {
+            setShowPlanSelection(false);
+            setShowSignup(true);
+          }}
+        />
+      );
+    }
+
+    // Se está criando perfil
+    if (showProfileCreation) {
+      return (
+        <ProfileCreation
+          onComplete={(profileData) => {
+            console.log("Perfil criado:", profileData);
+            setShowProfileCreation(false);
+            setIsLoggedIn(true);
+          }}
+          onBack={() => {
+            setShowProfileCreation(false);
+            setShowPlanSelection(true);
+          }}
+        />
+      );
+    }
+
+    // Tela de login padrão
+    return (
+      <>
+        <LoginPage
+          onLogin={() => setIsLoggedIn(true)}
+          onSignup={() => setShowSignup(true)}
+        />
+        <Toaster position="top-center" richColors />
+      </>
+    );
+  }
+
+  // ====================================
+  // APLICAÇÃO PRINCIPAL (USUÁRIO LOGADO)
+  // ====================================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 relative">
+      <Toaster position="top-center" richColors />
+      
+      {/* Fundo decorativo brasileiro */}
+      <BrazilianBackground />
+      
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      <motion.header
+        className="bg-white shadow-lg border-b-4 border-gradient-to-r from-green-500 via-yellow-400 to-red-500"
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-green-700">
-                🌀 Clube da Esquerda
-              </h1>
+            {/* Logo e título */}
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="w-12 h-12 bg-gradient-to-br from-green-500 via-yellow-400 to-red-500 rounded-full flex items-center justify-center"
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                <div className="text-center text-white">
+                  <div className="font-bold text-xs leading-none">
+                    CLUBE
+                  </div>
+                  <div className="font-bold text-xs leading-none">
+                    ESQUERDA
+                  </div>
+                </div>
+              </motion.div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 via-yellow-600 to-red-600 bg-clip-text text-transparent">
+                  Clube da Esquerda
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Roda democrática e criativa
+                </p>
+              </div>
             </div>
 
-            <nav className="flex items-center space-x-6">
-              <button
-                onClick={() => setCurrentPage('feed')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  currentPage === 'feed'
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-green-700'
-                }`}
+            {/* Barra de pesquisa */}
+            <div className="flex-1 max-w-xl mx-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Buscar rodas, pessoas, comunidades..."
+                  className="pl-10 bg-gray-50"
+                />
+              </div>
+            </div>
+
+            {/* Ações do usuário */}
+            <div className="flex items-center gap-3">
+              {/* Badge de Beta Tester */}
+              {isBetaTester && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring" }}
+                >
+                  <BetaTesterBadge
+                    onClick={() => setShowInviteSystem(true)}
+                  />
+                </motion.div>
+              )}
+
+              {/* Botão de amigos */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onClick={() => setShowFriendsPage(true)}
               >
-                🏠 Roda Principal
-              </button>
-              <button
-                onClick={() => setCurrentPage('communities')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  currentPage === 'communities'
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-green-700'
-                }`}
+                <UserPlus className="w-5 h-5 text-gray-600" />
+              </Button>
+
+              {/* Botão de notificações */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
               >
-                🎭 Comunidades
-              </button>
-              <button
-                onClick={() => setCurrentPage('events')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  currentPage === 'events'
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-green-700'
-                }`}
+                <Bell className="w-5 h-5 text-gray-600" />
+                {notifications > 0 && (
+                  <motion.span
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring" }}
+                  >
+                    {notifications}
+                  </motion.span>
+                )}
+              </Button>
+
+              {/* Botão de mensagens */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setActiveView("Conversas")}
               >
-                📅 Eventos
-              </button>
-              <button
-                onClick={() => setCurrentPage('profile')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  currentPage === 'profile'
-                    ? 'bg-green-100 text-green-700'
-                    : 'text-gray-600 hover:text-green-700'
-                }`}
+                <MessageSquare className="w-5 h-5 text-gray-600" />
+              </Button>
+
+              {/* Avatar do usuário */}
+              <Button
+                variant="ghost"
+                className="relative"
+                onClick={() => setActiveView("Perfil")}
               >
-                👤 Perfil
-              </button>
-              <button
+                <Avatar className="w-8 h-8 border-2 border-green-500">
+                  <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">
+                    {userEmail[0]?.toUpperCase() || "U"}
+                  </div>
+                </Avatar>
+              </Button>
+
+              {/* Botão de Logout */}
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleLogout}
-                className="px-4 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 transition-colors"
+                className="text-red-600 hover:bg-red-50"
               >
-                🚪 Sair
-              </button>
-            </nav>
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {currentPage === 'feed' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-green-700 mb-4">
-                🔥 Feed Principal - Roda da Conversa
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Bem-vindo ao Clube da Esquerda, <strong>{userEmail}</strong>!
-              </p>
-              
-              <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
-                <h3 className="font-bold text-green-800 mb-2">
-                  ✅ Autenticação Ativa!
-                </h3>
-                <p className="text-green-700">
-                  Você está logado com uma conta REAL do Supabase! 
-                  Seus dados estão seguros e você receberá emails de confirmação.
-                </p>
-              </div>
+      {/* Container principal */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex gap-8">
+          {/* Navegação Circular */}
+          <motion.div
+            className="w-80 flex-shrink-0"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <CircularNavigation
+              activeView={activeView}
+              onViewChange={setActiveView}
+            />
+          </motion.div>
 
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-                      U
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-semibold">Usuário Demo</span>
-                        <span className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded">
-                          Beta Tester
-                        </span>
-                      </div>
-                      <p className="text-gray-700">
-                        Que alegria ver tantas pessoas engajadas na luta por direitos! 
-                        Juntos somos mais fortes. ✊
-                      </p>
-                      <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                        <button className="hover:text-green-600 font-medium">
-                          ⬆️ UP! (42)
-                        </button>
-                        <button className="hover:text-blue-600">
-                          💬 Comentar
-                        </button>
-                        <button className="hover:text-purple-600">
-                          🔗 Compartilhar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Conteúdo principal */}
+          <motion.div
+            className="flex-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {renderMainContent()}
+          </motion.div>
+        </div>
+      </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">
-                      M
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-semibold">Movimento Cultural</span>
-                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">
-                          Instituição
-                        </span>
-                      </div>
-                      <p className="text-gray-700">
-                        Plantamos 50 mudas hoje na comunidade! Cada árvore é um futuro 
-                        mais verde para nossas crianças. 🌳💚
-                      </p>
-                      <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                        <button className="hover:text-green-600 font-medium">
-                          ⬆️ UP! (89)
-                        </button>
-                        <button className="hover:text-blue-600">
-                          💬 Comentar
-                        </button>
-                        <button className="hover:text-purple-600">
-                          🔗 Compartilhar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Modal de Sistema de Convites Beta */}
+      {showInviteSystem && (
+        <BetaInviteSystem
+          onClose={() => setShowInviteSystem(false)}
+        />
+      )}
 
-            <div className="bg-green-700 text-white rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold mb-3">
-                ✅ Supabase Configurado!
-              </h3>
-              <ul className="space-y-2">
-                <li>✅ Autenticação real funcionando</li>
-                <li>✅ Envio de emails automático</li>
-                <li>✅ Dados salvos com segurança</li>
-                <li>✅ Você está logado como: {userEmail}</li>
-                <li>🚀 Próximo: Adicionar posts, chat e mais!</li>
-              </ul>
-            </div>
-          </div>
-        )}
+      {/* Modal de Amigos */}
+      {showFriendsPage && (
+        <FriendsPage onClose={() => setShowFriendsPage(false)} />
+      )}
 
-        {currentPage === 'communities' && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-6">
-              🎭 Comunidades Temáticas
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { name: 'Música Popular', icon: '🎵', color: 'bg-yellow-500' },
-                { name: 'Poesia', icon: '📚', color: 'bg-red-500' },
-                { name: 'Filosofia Política', icon: '🧠', color: 'bg-green-500' },
-                { name: 'Meio Ambiente', icon: '🌱', color: 'bg-emerald-500' },
-                { name: 'Direitos Humanos', icon: '✊', color: 'bg-orange-500' },
-                { name: 'Arte Periférica', icon: '🎨', color: 'bg-purple-500' },
-              ].map((community) => (
-                <div
-                  key={community.name}
-                  className={`${community.color} text-white rounded-lg p-6 shadow-lg hover:scale-105 transition-transform cursor-pointer`}
-                >
-                  <div className="text-4xl mb-2">{community.icon}</div>
-                  <h3 className="font-bold text-lg">{community.name}</h3>
-                  <p className="text-sm opacity-90 mt-1">Clique para explorar</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'events' && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-6">
-              📅 Eventos Culturais
-            </h2>
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start space-x-4">
-                  <div className="text-4xl">🎵</div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-green-700">
-                      Roda de Samba da Resistência
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                      Encontro mensal para celebrar a cultura do samba
-                    </p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>📍 Praça da República, SP</span>
-                      <span>🗓️ Próximo Sábado</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start space-x-4">
-                  <div className="text-4xl">🌳</div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-green-700">
-                      Mutirão de Plantio
-                    </h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                      Vamos plantar 100 mudas! Junte-se a nós
-                    </p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>📍 Parque do Carmo, SP</span>
-                      <span>🗓️ Domingo, 14h</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'profile' && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-start space-x-6 mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white text-3xl font-bold">
-                {userEmail.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h2 className="text-2xl font-bold text-green-700">
-                    {userEmail}
-                  </h2>
-                  <span className="bg-green-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
-                    ✅ Conta Verificada
-                  </span>
-                </div>
-                <p className="text-gray-600">
-                  Membro autenticado • Engajado na luta por direitos humanos
-                </p>
-                <div className="flex items-center space-x-6 mt-4 text-sm">
-                  <div>
-                    <span className="font-bold text-lg text-green-600">0</span>
-                    <span className="text-gray-500 ml-1">Posts</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-lg text-green-600">0</span>
-                    <span className="text-gray-500 ml-1">Amigos</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-lg text-green-600">0</span>
-                    <span className="text-gray-500 ml-1">Comunidades</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="font-bold text-lg text-green-700 mb-3">
-                🏷️ Patches Políticos
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                <span className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 text-white px-3 py-1 rounded-full text-sm">
-                  🏳️‍🌈 LGBT+
-                </span>
-                <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm">
-                  ⚧️ Trans
-                </span>
-                <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm">
-                  ⚒️ Socialismo
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Floating Button - Create Post */}
-      <button
-        className="fixed bottom-8 right-8 bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-2xl hover:scale-110 transition-transform z-50"
-        title="Criar Publicação"
-      >
-        <span className="text-2xl">✏️</span>
-      </button>
-
-      <Toaster position="top-center" richColors />
+      {/* Modal de Analytics (para instituições) */}
+      {showAnalytics && (
+        <InstitutionAnalytics
+          onClose={() => setShowAnalytics(false)}
+        />
+      )}
     </div>
-  )
+  );
 }
