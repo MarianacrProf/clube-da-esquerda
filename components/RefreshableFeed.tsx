@@ -126,7 +126,6 @@ export function RefreshableFeed() {
   const [showNewPostsButton, setShowNewPostsButton] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
 
-  // Simular chegada de novos posts
   useEffect(() => {
     const timer = setTimeout(() => {
       setHasNewPosts(true);
@@ -139,10 +138,8 @@ export function RefreshableFeed() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     
-    // Simular carregamento
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Adicionar novos posts
     const updatedPosts = [...newPosts, ...posts];
     setPosts(updatedPosts);
     setHasNewPosts(false);
@@ -194,7 +191,6 @@ export function RefreshableFeed() {
     setShowCreatePost(false);
   };
 
-  // Identificar top 5 posts dos últimos 20 minutos
   const getTopPosts = () => {
     const sortedByUpvotes = [...posts].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
     return sortedByUpvotes.slice(0, 5);
@@ -204,7 +200,6 @@ export function RefreshableFeed() {
 
   return (
     <div className="w-full mx-auto space-y-6">
-      {/* Cabeçalho do Feed */}
       <div className="flex items-center justify-between">
         <h2 className="text-green-700">🌀 Roda Principal</h2>
         <div className="flex items-center gap-2">
@@ -228,7 +223,6 @@ export function RefreshableFeed() {
         </div>
       </div>
 
-      {/* Botão de novos posts flutuante */}
       {showNewPostsButton && (
         <motion.div
           className="sticky top-4 z-10 flex justify-center"
@@ -247,9 +241,9 @@ export function RefreshableFeed() {
         </motion.div>
       )}
 
-      {/* Botão Flutuante Criar Publicação */}
+      {/* BOTÃO FLUTUANTE CRIAR PUBLICAÇÃO */}
       <motion.button
-        className="fixed bottom-8 right-8 z-40 w-16 h-16 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform group"
+        className="fixed bottom-8 right-8 z-50 w-16 h-16 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform group"
         onClick={() => setShowCreatePost(true)}
         whileHover={{ scale: 1.1, rotate: 90 }}
         whileTap={{ scale: 0.95 }}
@@ -271,7 +265,6 @@ export function RefreshableFeed() {
         />
       </motion.button>
 
-      {/* Lista de Posts */}
       <div className="space-y-6">
         {posts.map((post, index) => {
           const isTopPost = topPosts.includes(post);
@@ -299,7 +292,6 @@ export function RefreshableFeed() {
               )}
               
               <Card className={`p-6 relative ${post.isNew ? 'border-green-300 bg-green-50' : ''} ${isTopPost ? 'ring-2 ring-orange-400 shadow-xl' : ''}`}>
-                {/* Badge TOP POST */}
                 {isTopPost && (
                   <motion.div
                     className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10"
@@ -322,7 +314,6 @@ export function RefreshableFeed() {
                   </Badge>
                 )}
                 
-                {/* Header do post */}
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar className="w-12 h-12">
                     <ImageWithFallback
@@ -349,7 +340,6 @@ export function RefreshableFeed() {
                   </Button>
                 </div>
                 
-                {/* Conteúdo */}
                 <div className="mb-4">
                   <p className="text-gray-800 leading-relaxed">{post.content}</p>
                   
@@ -364,10 +354,9 @@ export function RefreshableFeed() {
                   )}
                 </div>
                 
-                {/* Ações */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-4">
-                    {/* Botão UP! */}
+                    {/* BOTÃO UP! COM ANIMAÇÃO */}
                     <motion.button
                       className={`flex items-center gap-1 px-4 py-2 rounded-full font-bold transition-all ${
                         post.hasUpvoted
@@ -426,7 +415,6 @@ export function RefreshableFeed() {
         })}
       </div>
 
-      {/* Indicador de fim do feed */}
       <div className="text-center py-8">
         <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 via-yellow-400 to-red-500 rounded-full flex items-center justify-center">
           <div className="text-center text-white">
@@ -446,7 +434,7 @@ export function RefreshableFeed() {
         </Button>
       </div>
 
-      {/* Modal Criar Post */}
+      {/* MODAL CRIAR POST */}
       <CreatePostModal
         isOpen={showCreatePost}
         onClose={() => setShowCreatePost(false)}
