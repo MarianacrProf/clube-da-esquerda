@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Toaster, toast } from "sonner";
-import { supabase } from "./supabaseClient";
+import { motion } from "motion/react";
+import { Toaster, toast } from "sonner@2.0.3";
+import { supabase } from "./lib/supabase";
 import { CircularNavigation } from "./components/CircularNavigation";
 import { CircularFeed } from "./components/CircularFeed";
 import { UserProfile } from "./components/UserProfile";
@@ -97,7 +97,6 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
             community={community}
             index={index}
             onClick={() => {
-              // Todos os patches levam para comunidades temáticas
               onSelectTheme({
                 title: community.name,
                 symbol: community.symbol,
@@ -108,7 +107,6 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
         ))}
       </div>
 
-      {/* Comunidades criadas pelo usuário */}
       {userCommunities.length > 0 && (
         <motion.div
           className="mb-12"
@@ -158,7 +156,6 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
         </motion.div>
       )}
 
-      {/* Seção de comunidades em destaque */}
       <motion.div
         className="mt-16 text-center"
         initial={{ opacity: 0, y: 20 }}
@@ -184,7 +181,6 @@ function CommunitiesView({ onSelectTheme, onSelectCommunity }) {
         </div>
       </motion.div>
 
-      {/* Modal de Criar Comunidade */}
       <CreateCommunityModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -264,17 +260,11 @@ function ChatView() {
   );
 }
 
-// ====================================
-// COMPONENTE PRINCIPAL COM SUPABASE
-// ====================================
-
 export default function App() {
-  // Estados de autenticação Supabase
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(true);
   
-  // Estados da aplicação
   const [activeView, setActiveView] = useState("Roda Principal");
   const [notifications] = useState(3);
   const [showDebateRoom, setShowDebateRoom] = useState(false);
@@ -288,11 +278,9 @@ export default function App() {
   const [showMusicCommunity, setShowMusicCommunity] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Sistema de Beta Tester
   const [isBetaTester] = useState(true);
   const [showInviteSystem, setShowInviteSystem] = useState(false);
 
-  // Estado com persistência no localStorage
   const [userPlanType, setUserPlanType] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("userPlanType");
@@ -300,11 +288,7 @@ export default function App() {
     return null;
   });
 
-  // ====================================
-  // SUPABASE: Verificar sessão ao carregar
-  // ====================================
   useEffect(() => {
-    // Verificar se já existe sessão ativa
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsLoggedIn(true);
@@ -313,7 +297,6 @@ export default function App() {
       setLoading(false);
     });
 
-    // Escutar mudanças de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -330,9 +313,6 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ====================================
-  // SUPABASE: Função de Login Real
-  // ====================================
   const handleLoginWithSupabase = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -356,9 +336,21 @@ export default function App() {
     }
   };
 
-  // ====================================
-  // SUPABASE: Função de Logout
-  // ====================================
+  const handlePasswordReset = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email de recuperação");
+      console.error("Password reset error:", error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -371,9 +363,6 @@ export default function App() {
     }
   };
 
-  // ====================================
-  // RENDERIZAR CONTEÚDO PRINCIPAL
-  // ====================================
   const renderMainContent = () => {
     if (showDebateRoom) {
       return <DebateRoomViewer />;
@@ -446,7 +435,6 @@ export default function App() {
     }
   };
 
-  // Loading inicial
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 flex items-center justify-center">
@@ -466,11 +454,7 @@ export default function App() {
     );
   }
 
-  // ====================================
-  // TELAS DE AUTENTICAÇÃO
-  // ====================================
   if (!isLoggedIn) {
-    // Se está no cadastro
     if (showSignup && !showPlanSelection && !showProfileCreation) {
       return (
         <>
@@ -486,14 +470,12 @@ export default function App() {
       );
     }
 
-    // Se está na seleção de plano
     if (showPlanSelection && !showProfileCreation) {
       return (
         <PlanSelection
           onComplete={(planData) => {
             console.log("Plano selecionado:", planData);
             setUserPlanType(planData.plan);
-            // Salvar no localStorage
             if (typeof window !== "undefined") {
               localStorage.setItem(
                 "userPlanType",
@@ -503,7 +485,6 @@ export default function App() {
                 "planData",
                 JSON.stringify(planData),
               );
-              // Se for beta tester, salvar também
               if (planData.isBetaTester) {
                 localStorage.setItem("isBetaTester", "true");
               }
@@ -519,7 +500,6 @@ export default function App() {
       );
     }
 
-    // Se está criando perfil
     if (showProfileCreation) {
       return (
         <ProfileCreation
@@ -536,7 +516,6 @@ export default function App() {
       );
     }
 
-    // Tela de login padrão
     return (
       <>
         <LoginPage
@@ -548,17 +527,12 @@ export default function App() {
     );
   }
 
-  // ====================================
-  // APLICAÇÃO PRINCIPAL (USUÁRIO LOGADO)
-  // ====================================
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 relative">
       <Toaster position="top-center" richColors />
       
-      {/* Fundo decorativo brasileiro */}
       <BrazilianBackground />
       
-      {/* Header */}
       <motion.header
         className="bg-white shadow-lg border-b-4 border-gradient-to-r from-green-500 via-yellow-400 to-red-500"
         initial={{ opacity: 0, y: -50 }}
@@ -566,7 +540,6 @@ export default function App() {
       >
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo e título */}
             <div className="flex items-center gap-4">
               <motion.div
                 className="w-12 h-12 bg-gradient-to-br from-green-500 via-yellow-400 to-red-500 rounded-full flex items-center justify-center"
@@ -596,7 +569,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Barra de pesquisa */}
             <div className="flex-1 max-w-xl mx-8">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -607,9 +579,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Ações do usuário */}
             <div className="flex items-center gap-3">
-              {/* Badge de Beta Tester */}
               {isBetaTester && (
                 <motion.div
                   initial={{ scale: 0 }}
@@ -622,7 +592,6 @@ export default function App() {
                 </motion.div>
               )}
 
-              {/* Botão de amigos */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -632,7 +601,6 @@ export default function App() {
                 <UserPlus className="w-5 h-5 text-gray-600" />
               </Button>
 
-              {/* Botão de notificações */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -651,7 +619,6 @@ export default function App() {
                 )}
               </Button>
 
-              {/* Botão de mensagens */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -660,7 +627,6 @@ export default function App() {
                 <MessageSquare className="w-5 h-5 text-gray-600" />
               </Button>
 
-              {/* Avatar do usuário */}
               <Button
                 variant="ghost"
                 className="relative"
@@ -673,7 +639,6 @@ export default function App() {
                 </Avatar>
               </Button>
 
-              {/* Botão de Logout */}
               <Button
                 variant="outline"
                 size="sm"
@@ -687,10 +652,8 @@ export default function App() {
         </div>
       </motion.header>
 
-      {/* Container principal */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-8">
-          {/* Navegação Circular */}
           <motion.div
             className="w-80 flex-shrink-0"
             initial={{ opacity: 0, x: -50 }}
@@ -702,7 +665,6 @@ export default function App() {
             />
           </motion.div>
 
-          {/* Conteúdo principal */}
           <motion.div
             className="flex-1"
             initial={{ opacity: 0 }}
@@ -714,19 +676,16 @@ export default function App() {
         </div>
       </div>
 
-      {/* Modal de Sistema de Convites Beta */}
       {showInviteSystem && (
         <BetaInviteSystem
           onClose={() => setShowInviteSystem(false)}
         />
       )}
 
-      {/* Modal de Amigos */}
       {showFriendsPage && (
         <FriendsPage onClose={() => setShowFriendsPage(false)} />
       )}
 
-      {/* Modal de Analytics (para instituições) */}
       {showAnalytics && (
         <InstitutionAnalytics
           onClose={() => setShowAnalytics(false)}
